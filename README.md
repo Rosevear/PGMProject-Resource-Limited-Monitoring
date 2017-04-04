@@ -1,7 +1,11 @@
 # PGMProject-Resource-Limited-Monitoring
-Course project for Cmput650: Probabilistic Graphical Models, at the University Of Alberta
-
-Authors: Cody Rosevear, Hayden Barker
+%CMPUT 650: Probabilistic Graphical Models
+%Course Project: Resource Limited Monitoring
+%Cody Rosevear, Hayden Barker
+%Department Of Computing Science
+%University Of Alberta
+%Edmonton, AB, T6G 2E8, Canada
+%rosevear@ualberta.ca, hsbarker@ualberta.ca
 
 Relevant links in BNT documentation
 http://bayesnet.github.io/bnt/docs/usage.html#basics
