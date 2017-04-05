@@ -40,8 +40,9 @@ for i = 1:2
 end
 
 %Set node sizes (number of values for each node)
-ns = 2*ones(1, N);
+ns = ones(1, N);
 ns(utility) = 1;
+ns(4:12) = 20;
 ns
  
 %Indices in the limid CPD attribute that pick out the various cpds
@@ -70,7 +71,6 @@ limid.CPD{S_obs_params} = tabular_CPD(limid, S_obs(1));
 %Decision CPD
 for i=1:3
   limid.CPD{test_d_param(i)} = tabular_decision_node(limid, test_d(i));
-  %limid.CPD{treat_d_param(i)} = tabular_decision_node(limid, treat_d(i));
 end
 
 inf_engine = jtree_limid_inf_engine(limid);
