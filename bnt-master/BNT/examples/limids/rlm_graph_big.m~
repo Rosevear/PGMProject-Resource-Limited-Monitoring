@@ -54,9 +54,9 @@ S_true_params = 1:5;
 S_obs_params = 6:10;
 test_d_params = 11:15;
 treat_d_params = 16:20;
-util_params = 21:25;
+util_params = 20:25;
 
-%Params(i) = j signifies that node i has a CPD defined at limid.CPD(i)
+%Params(i) = j signifies that node i has a cpd defined at limid.CPD(i)
 params = ones(1, N);
 params(S_true) = S_true_params;
 params(S_obs) = S_obs_params;
@@ -67,12 +67,11 @@ params(utility) = util_params;
 %Make the influence diagram
 limid = mk_limid(dag, ns, 'chance', [S_obs S_true], 'decision', [test_d treat_d], 'utility', utility, 'equiv_class', params, 'discrete', discrete_nodes);
 
-%Fill in the node CPD's
+%Fill in the node cpd's
 for i=1:5
   
   %Chance
   limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i));
-  limid.CPD{S_obs_params(i)} = tabular_CPD(limid, S_obs(i));
   
   %Decision
   limid.CPD{test_d_params(i)} = tabular_decision_node(limid, test_d(i));
@@ -81,6 +80,9 @@ for i=1:5
   %Utility
   limid.CPD{util_params(i)} = tabular_utility_node(limid, utility(i));
 end
+
+%Symptom CPDs
+
 
 inf_engine = jtree_limid_inf_engine(limid);
 max_iter = 1;

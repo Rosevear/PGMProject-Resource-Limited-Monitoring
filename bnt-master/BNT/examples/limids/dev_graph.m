@@ -10,76 +10,76 @@ addpath(genpathKPM(pwd))
 disp('Constructing the influence diagram');
 
 %we number nodes down and to the right
-S_true = [1 6 11 16 21];
-S_obs = [2 7 12 17 22];
-test_d = [3 8 13 18 23];
-treat_d = [4 9 14 19 24];
-utility = [5 10 15 20 25];
+S_true = [1 6];
+S_obs = [2 7] ;
+test_d = [3 8] ;
+treat_d = [4 9];
+utility = [5 10];
 
-N = 25;
+N = 10;
+
 dag = zeros(N);
 
-%Construct the bayesian net's edges
-for i=1:4
-   %The current true symptom influences the current uitility and the state of
-   %the true symptom and the observed symptom at time t + 1
-   dag(S_true(i), [utility(i) , S_true(i + 1), S_obs(i + 1)]) = 1;
-   
-   %The current observed symptom influences the current test and treatment
-   %decision nodes
-   dag(S_obs(i), [test_d(i), treat_d(i)]) = 1;
-   
-   %The current test decision influences the current treatment and utility
-   %and the state of the observed symptoms at time t + 1
-   dag(test_d(i), [treat_d(i), utility(i), S_obs(i + 1), ]) = 1;
-   
-   %The current treatment decision influences the current utility and the
-   %the true state and the observed state of the symptom at time t + 1
-   dag(treat_d(i), [utility(i), S_obs(i + 1), S_true(i + 1)]) = 1;
-end
+%T = 1
+%Intraslice edges
+%S1* -> U1 
+dag(1, 5) = 1;
+%Sob1 -> Test1
+dag(2, 3) = 1;
+%Sob1 -> Treat1
+dag(2, 4) = 1;
+%Test1 -> Treat1
+dag(3, 4) = 1;
+%Test1 -> U1
+dag(3, 5) = 1;
+%Treat1 -> U1
+dag(4, 5) = 1;
 
-%Need to add last intra timeslice edges
-dag(21, 25) = 1;
-dag(22, 23) = 1;
-dag(23, [24 25]) = 1;
-dag(24, 25) = 1;
+%T = 1
+%Interslice edges
+%S1* -> S2*
+dag(1, 6) = 1;
+
+%T = 2
 
 %Set node sizes (number of values for each node)
-%NOTE: Solver breaks for ns(2) > 1 or ns(1) > 1
-ns = ones(1, N);
+ns = 2 * ones(1, N);
 ns(utility) = 1;
-
+ns
+ 
 %Indices in the limid CPD attribute that pick out the various cpds
-util_param = 1;
-S_true_params = 2;
-S_obs_params = 3;
-test_d_param = 4:8;
-treat_d_param = 9:13;
+S_true_params = 2:3;
+S_obs_params = 4;
+test_d_params = 5:6;
+treat_d_params = 7:8;
+util_params = 9:10;
 
 %Params(i) = j signifies that node i has a cpd defined at limid.CPD(i)
 params = ones(1, N);
 params(S_true) = S_true_params;
 params(S_obs) = S_obs_params;
-params(test_d) = test_d_param;
-params(treat_d) = treat_d_param;
-params(utility) = util_param;
+params(test_d) = test_d_params;
+params(treat_d) = treat_d_params;
+params(utility) = util_params;
 
 %Make the influence diagram
 limid = mk_limid(dag, ns, 'chance', [S_obs S_true], 'decision', [test_d treat_d], 'utility', utility, 'equiv_class', params);
 
-%Utility CPD
-limid.CPD{util_param} = tabular_utility_node(limid, utility(1));
+%Symptom CPDs
+%limid.CPD{S_true_params} = tabular_CPD(limid, S_true(1));
+limid.CPD{S_obs_params} = tabular_CPD(limid, S_obs(1));
 
-%Decision CPD
-for i=1:5
-  %limid.CPD{dparams(i)} = tabular_decision_node(limid, d(i));
-  limid.CPD{test_d_param(i)} = tabular_decision_node(limid, test_d(i));
-  limid.CPD{treat_d_param(i)} = tabular_decision_node(limid, treat_d(i));
+%Decision And Utility CPD
+for i = 1:2
+    limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i));
+    
+    %Decision
+    limid.CPD{test_d_params(i)} = tabular_decision_node(limid, test_d(i));
+    limid.CPD{treat_d_params(i)} = tabular_decision_node(limid, treat_d(i));
+    %Utility
+    limid.CPD{util_params(i)} = tabular_utility_node(limid, utility(i));
 end
 
-%Symptom CPDs
-limid.CPD{S_true_params} = tabular_CPD(limid, S_true(1));
-limid.CPD{S_obs_params} = tabular_CPD(limid, S_obs(1));
 
 inf_engine = jtree_limid_inf_engine(limid);
 max_iter = 1;
@@ -111,3 +111,5 @@ MEU
 %     dispcpt(strategy{e}{d(i)})
 %   end
 % end
+
+

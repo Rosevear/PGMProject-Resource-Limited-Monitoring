@@ -40,7 +40,8 @@ for i = 1:2
 end
 
 %Set node sizes (number of values for each node)
-ns = 2*ones(1, N);
+ns(2:25) = 10;
+ns = ones(1, N);
 ns(utility) = 1;
 ns
  

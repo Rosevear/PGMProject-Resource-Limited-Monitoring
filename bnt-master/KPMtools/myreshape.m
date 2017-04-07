@@ -7,8 +7,5 @@ if length(sizes)==0
 elseif length(sizes)==1
   T = reshape(T, [sizes 1]);
 else
-%     sizes
-%     sizes(:)'
-%     T
   T = reshape(T, sizes(:)');
 end

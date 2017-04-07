@@ -21,7 +21,7 @@ end
 dag(h(4), u(4)) = 1;
 
 % information arcs
-fig = 0;
+fig = 2;
 switch fig
  case 0,
   % no info arcs

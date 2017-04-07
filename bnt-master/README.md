@@ -18,5 +18,3 @@ As of January 2014, this is maintained on Github at https://github.com/bayesnet/
 - [Why MATLAB?](https://github.com/bayesnet/bnt/wiki/WhyMatlab)
 - [Acknowledgements](https://github.com/bayesnet/bnt/wiki/ThanksAndAcknowledgments)
 - How do I contribute changes?  Submit a pull request on GitHub at https://github.com/bayesnet/bnt/
-
-To Run: Do this first: addpath(genpathKPM(pwd))
