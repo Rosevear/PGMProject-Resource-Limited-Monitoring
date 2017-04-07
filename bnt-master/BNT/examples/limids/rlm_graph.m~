@@ -69,7 +69,7 @@ limid = mk_limid(dag, ns, 'chance', [S_obs S_true], 'decision', [test_d treat_d]
 
 %Fill in the node CPD's
 for i=1:5
-  %TODO: Fill in actual cpd's; right now they are randomly generated
+  %TODO: Fill in actual cpd's;
   %Chance
   limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i));
   limid.CPD{S_obs_params(i)} = tabular_CPD(limid, S_obs(i));
@@ -87,3 +87,4 @@ max_iter = 1;
 
 disp('Solving the current influence diagram');
 [strategy, MEU, niter] = solve_limid(inf_engine, 'max_iter', max_iter);
+MEU
