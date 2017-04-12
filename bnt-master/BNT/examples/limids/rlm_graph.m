@@ -27,12 +27,12 @@ for i=1:4
    dag(S_true(i), [utility(i) , S_true(i + 1), S_obs(i + 1)]) = 1;
    
    %The current observed symptom influences the current test and treatment
-   %decision nodes
-   dag(S_obs(i), [test_d(i), treat_d(i)]) = 1;
+   %decision nodes, and the observed symptom at i + 1
+   dag(S_obs(i), [test_d(i), treat_d(i), S_obs(i + 1)]) = 1;
    
-   %The current test decision influences the current treatment and utility
+   %The current test decision influences the current utility
    %and the state of the observed symptoms at time t + 1
-   dag(test_d(i), [treat_d(i), utility(i), S_obs(i + 1)]) = 1;
+   dag(test_d(i), [utility(i), S_obs(i + 1)]) = 1;
    
    %The current treatment decision influences the current utility and the
    %the true state and the observed state of the symptom at time t + 1
@@ -87,3 +87,4 @@ max_iter = 1;
 
 disp('Solving the current influence diagram');
 [strategy, MEU, niter] = solve_limid(inf_engine, 'max_iter', max_iter);
+MEU
