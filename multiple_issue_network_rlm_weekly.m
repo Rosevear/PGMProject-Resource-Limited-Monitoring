@@ -6,7 +6,29 @@
 %Edmonton, AB, T6G 2E8, Canada
 %rosevear@ualberta.ca, hsbarker@ualberta.ca
 
-NUM_ITERATIONS = 3;
+
+ITERATE_DISEASE = 1;
+ITERATE_UTILITY = 0;
+
+%These are the disease/utility profiles used when one is held constant and
+%the other is varied
+FIXED_DISEASE = [0.85 0.75 0.65 0.95 0.80 0.75 0.10 0.15 0.20 0.04 0.15 0.10 0.05 0.10 0.15 0.01 0.05 0.10];
+FIXED_UTILITY = [-25 -50 -75 -30 -55 -80 -35 -60 -85 -1000 -1000 -1000];
+
+FIXED_DISEASE2 = [0.40 0.10 0.05 0.80 0.70 0.20 0.50 0.40 0.15 0.15 0.20 0.50 0.10 0.60 0.80 0.05 0.10 0.30];
+FIXED_UTILITY2 = [-35 -60 -85 -30 -65 -90 -45 -70 -95 -10000 -1000 -1000;];
+
+DISEASE_PROFILES = [0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33; 0.85 0.75 0.65 0.95 0.80 0.75 0.10 0.15 0.20 0.04 0.15 0.10 0.05 0.10 0.15 0.01 0.05 0.10; 0.40 0.10 0.05 0.80 0.70 0.20 0.50 0.40 0.15 0.15 0.20 0.50 0.10 0.60 0.80 0.05 0.10 0.30; 0.10 0.05 0.01 0.20 0.10 0.05 0.50 0.25 0.04 0.60 0.40 0.30 0.40 0.70 0.95 0.20 0.50 0.65];
+UTILITY_PROFILES = [-25 -50 -75 -30 -55 -80 -35 -60 -85 -1000 -1000 -1000; -35 -60 -85 -30 -65 -90 -45 -70 -95 -1000 -1000 -1000; -1 -2 -3 -6 -7 -8 -11 -12 -13 -1000 -1000 -1000; -35 -60 -85 -45 -70 -95 -30 -65 -90 -1000 -1000 -1000; -25 -25 -25 -30 -30 -30 -35 -35 -35 -1000 -1000 -1000; -10 -10 -10 -10 -10 -10 -10 -10 -10 -1000 -1000 -1000];
+
+if ITERATE_DISEASE == 1
+    NUM_ITERATIONS = size(DISEASE_PROFILES, 1);
+elseif ITERATE_UTILITY == 1
+    NUM_ITERATIONS = size(UTILITY_PROFILES, 1);
+else
+    NUM_ITERATIONS = 1200;
+end
+
 SECOND_ISSUE_UTILITY_OFFSET = 5;
 SECOND_ISSUE_RAND_SEED_OFFSET = 10;
 N = 51;
@@ -146,8 +168,19 @@ for iteration = 1:NUM_ITERATIONS
       rand('state', seed);
       randn('state', seed);
       
-      %Chance nodes
-      limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i));
+       %Chance nodes
+      if i == 1
+          %First timeslice chance nodes have no parents, so their cpd is just a
+          % vector of length equal to the number of possible values
+          %we use a randomly generated cpd
+          limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i));
+      else
+          if ITERATE_DISEASE == 1
+              limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i), DISEASE_PROFILES(iteration, :));
+          else
+              limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i), FIXED_DISEASE);
+          end
+      end
       limid.CPD{S_obs_params(i)} = tabular_CPD(limid, S_obs(i));
       
       %To ensure that the CPD's for the issues are never exactly the same
@@ -155,7 +188,19 @@ for iteration = 1:NUM_ITERATIONS
       rand('state', seed);
       randn('state', seed);
       
-      limid.CPD{S2_true_params(i)} = tabular_CPD(limid, S2_true(i));
+      %Chance nodes: issue 2
+      if i == 1
+          %First timeslice chance nodes have no parents, so their cpd is just a
+          % vector of length equal to the number of possible values
+          %we use a randomly generated cpd
+          limid.CPD{S2_true_params(i)} = tabular_CPD(limid, S2_true(i));
+      else
+          if ITERATE_DISEASE == 1 && iteration < NUM_ITERATIONS
+              limid.CPD{S2_true_params(i)} = tabular_CPD(limid, S2_true(i), DISEASE_PROFILES(iteration + 1, :));
+          else
+              limid.CPD{S2_true_params(i)} = tabular_CPD(limid, S2_true(i), FIXED_DISEASE2);
+          end
+      end
       limid.CPD{S2_obs_params(i)} = tabular_CPD(limid, S2_obs(i));
           
       %Decision nodes
@@ -165,10 +210,21 @@ for iteration = 1:NUM_ITERATIONS
       limid.CPD{treat2_d_params(i)} = tabular_decision_node(limid, treat2_d(i));
 
       %Utility nodes
-      %TODO: Add utilities for rlm weekly
-      limid.CPD{util_params(i)} = tabular_utility_node(limid, utility(i), [-25 -50 -75 -30 -55 -80 -35 -60 -85 -40 -65 -90]);
-      %Add another issue, where the negative utility is 10 > than the other
-      limid.CPD{util_params(i + SECOND_ISSUE_UTILITY_OFFSET)} = tabular_utility_node(limid, utility(i + SECOND_ISSUE_UTILITY_OFFSET), [-35 -60 -85 -30 -65 -90 -45 -70 -95 -50 -75 -100]);
+       %Utility nodes: Issue 1
+      if ITERATE_UTILITY == 1
+          limid.CPD{util_params(i)} = tabular_utility_node(limid, utility(i), UTILITY_PROFILES(iteration, :));
+      else
+          limid.CPD{util_params(i)} = tabular_utility_node(limid, utility(i), FIXED_UTILITY);
+      end
+
+      %Utility nodes: Issue 2
+      if ITERATE_UTILITY == 1 && iteration < NUM_ITERATIONS
+          limid.CPD{util_params(i + SECOND_ISSUE_UTILITY_OFFSET)} = tabular_utility_node(limid, utility(i + SECOND_ISSUE_UTILITY_OFFSET), UTILITY_PROFILES(iteration + 1, :));
+      else
+          limid.CPD{util_params(i + SECOND_ISSUE_UTILITY_OFFSET)} = tabular_utility_node(limid, utility(i + SECOND_ISSUE_UTILITY_OFFSET), FIXED_UTILITY2);
+      end
+    
+      %TODO: Add enofrcement utilities
       limid.CPD{rlm_utility_params} = tabular_utility_node(limid, 51); 
     end
 
