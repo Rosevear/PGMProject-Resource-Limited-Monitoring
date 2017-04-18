@@ -150,4 +150,10 @@ for e=approx(:)'
     dispcpt(strategy{e}{d(i)})
   end
 end
+ % hi di P(hj=1) P(hj=2),  j = i+1, i=1:3
+  % 1  1  0.8     0.2
+  % 2  1  0.1     0.9
+  % 1  2  0.9     0.1
+  % 2  2  0.5     0.5
+
 

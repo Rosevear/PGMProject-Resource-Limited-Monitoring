@@ -23,7 +23,6 @@ CPD = init_fields;
 ns = bnet.node_sizes;
 ps = parents(bnet.dag, node);
 sz = ns(ps);
-
 if nargin < 3
   T = myrand(sz);
 else
