@@ -6,7 +6,25 @@
 %Edmonton, AB, T6G 2E8, Canada
 %rosevear@ualberta.ca, hsbarker@ualberta.ca
 
-NUM_ITERATIONS = 1200;
+ITERATE_DISEASE = 0;
+ITERATE_UTILITY = 1;
+
+%These are the disease/utility profiles used when one is held constant and
+%the other is varied
+FIXED_DISEASE = [0.95 0.80 0.75 0.04 0.15 0.10 0.01 0.05 0.10;];
+FIXED_UTILITY = [-35 -60 -85];
+
+DISEASE_PROFILES = [0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33; 0.95 0.80 0.75 0.04 0.15 0.10 0.01 0.05 0.10; 0.80 0.70 0.20 0.15 0.20 0.50 0.05 0.10 0.30; 0.20 0.10 0.05 0.60 0.40 0.30 0.20 0.50 0.65];
+UTILITY_PROFILES = [-35 -60 -85; -45 -70 -95; -11 -12 -13; -30 -65 -90; -30 -65 -90; -35 -35 -35; -10 -10 -10];
+
+if ITERATE_DISEASE == 1
+    NUM_ITERATIONS = size(DISEASE_PROFILES, 1);
+elseif ITERATE_UTILITY == 1
+    NUM_ITERATIONS = size(UTILITY_PROFILES, 1);
+else
+    NUM_ITERATIONS = 1200;
+end
+
 max_expected_utilities = zeros(NUM_ITERATIONS, 1);
 strategies = repmat(struct('strategy_matrix', []), 1, NUM_ITERATIONS);
 
@@ -19,13 +37,11 @@ for iteration = 1:NUM_ITERATIONS
     disp('Constructing the influence diagram for iteration ' + string(iteration));
 
     %Number the nodes top to bottom then left to right
-    S_true = [1 6 11 16 21];
-    S_obs = [2 7 12 17 22];
-    test_d = [3 8 13 18 23];
-    treat_d = [4 9 14 19 24];
-    utility = [5 10 15 20 25];
+    S_true = [1 4 7 10 13];
+    treat_d = [2 5 8 11 14];
+    utility = [3 6 9 12 15];
 
-    N = 25;
+    N = 15;
     dag = zeros(N);
 
     %Construct the influence diagram's edges
@@ -33,52 +49,39 @@ for iteration = 1:NUM_ITERATIONS
     for i=1:4
        %The current true symptom influences the current uitility and the state of
        %the true symptom and the observed symptom at time t + 1
-       dag(S_true(i), [utility(i) , S_true(i + 1), S_obs(i + 1)]) = 1;
-
-       %The current observed symptom influences the current test and treatment
-       %decision nodes
-       dag(S_obs(i), [test_d(i), treat_d(i)]) = 1;
-
-       %The current test decision influences the current utility
-       %and the state of the observed symptoms at time t + 1
-       dag(test_d(i), [utility(i), S_obs(i + 1)]) = 1;
+       dag(S_true(i), [utility(i) , S_true(i + 1)]) = 1;
 
        %The current treatment decision influences the current utility and the
        %the true state and the observed state of the symptom at time t + 1
-       dag(treat_d(i), [utility(i), S_true(i + 1)]) = 1;
+       %Limited to 3 tests a week, so do it on the 1st, 3rd, and 5th
+       if mod(i, 2) == 1
+           dag(treat_d(i), [utility(i), S_true(i + 1)]) = 1;
+       end
     end
 
     %Need to add the intra timeslice edges for the last timeslice
-    dag(21, 25) = 1;
-    dag(22, [23 24]) = 1;
-    dag(23, 25) = 1;
-    dag(24, 25) = 1;
+    dag(13, 15) = 1;
+    dag(14, 15) = 1;
 
     %Set node sizes (number of values for each node)
     ns = ones(1, N);
     ns(S_true) = 3;  %1 = Minor, 2 = Moderate,  3 = Severe
-    ns(S_obs) = 4;   %1 = Minor, 2 = Moderate, 3 = Severe, 4 = Unobserved
-    ns(test_d) = 2;  %1 = don't test, 2 = test
-    ns(treat_d) = 2; %1 = don't treat, 2 = treat
+    ns(treat_d) = 1; %1 = treat
     ns(utility) = 1; %Utility for the current timeslice
 
     %Indices in the limid object CPD attribute that pick out the various cpds
     S_true_params = 1:5;
-    S_obs_params = 6:10;
-    test_d_params = 11:15;
-    treat_d_params = 16:20;
-    util_params = 21:25;
+    treat_d_params = 6:10;
+    util_params = 11:15;
 
     %Params(i) = j signifies that node i has a CPD defined at limid.CPD(i)
     params = ones(1, N);
     params(S_true) = S_true_params;
-    params(S_obs) = S_obs_params;
-    params(test_d) = test_d_params;
     params(treat_d) = treat_d_params;
     params(utility) = util_params;
 
     %Make the influence diagram
-    limid = mk_limid(dag, ns, 'chance', [S_obs S_true], 'decision', [test_d treat_d], 'utility', utility, 'equiv_class', params);
+    limid = mk_limid(dag, ns, 'chance', S_true, 'decision', treat_d, 'utility', utility, 'equiv_class', params);
 
     %Search the parameter space of the CPD's
     for i=1:5
@@ -89,20 +92,25 @@ for iteration = 1:NUM_ITERATIONS
       if i == 1
           %First timeslice chance nodes have no parents, so their cpd is just a
           % vector of length equal to the number of possible values
+          %we use a randomly generated cpd
           limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i));
-          limid.CPD{S_obs_params(i)} = tabular_CPD(limid, S_obs(i));
       else
-          limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i));
-          limid.CPD{S_obs_params(i)} = tabular_CPD(limid, S_obs(i));
+          if ITERATE_DISEASE == 1
+              limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i), DISEASE_PROFILES(iteration, :));
+          else
+              limid.CPD{S_true_params(i)} = tabular_CPD(limid, S_true(i), FIXED_DISEASE);
+          end
       end
 
       %Decision nodes
-      limid.CPD{test_d_params(i)} = tabular_decision_node(limid, test_d(i));
       limid.CPD{treat_d_params(i)} = tabular_decision_node(limid, treat_d(i));
 
       %Utility nodes
-      %TODO: Add rlm
-      limid.CPD{util_params(i)} = tabular_utility_node(limid, utility(i), [-25 -50 -75 -30 -55 -80 -35 -60 -85 -40 -65 -90]);
+      if ITERATE_UTILITY == 1
+          limid.CPD{util_params(i)} = tabular_utility_node(limid, utility(i), UTILITY_PROFILES(iteration, :));
+      else
+          limid.CPD{util_params(i)} = tabular_utility_node(limid, utility(i), FIXED_UTILITY);
+      end
     end
 
     inf_engine = jtree_limid_inf_engine(limid);
@@ -146,7 +154,7 @@ strategy_similarity_standard_deviation = std(strategy_similarities);
 
 
 %Write them to a file for safekeeping
-stat_summary_file = fopen('single_issue_network_stats.txt', 'W');
+stat_summary_file = fopen('single_issue_network_stats_baseline.txt', 'W');
 fprintf(stat_summary_file, 'Stat Summary File For Single Issue Network\n');
 fprintf(stat_summary_file, 'Min: Max Expected Utility: ' + string(min_utility) + '\n');
 fprintf(stat_summary_file, 'Max: Max Expected Utility: ' + string(max_utility) + '\n');
