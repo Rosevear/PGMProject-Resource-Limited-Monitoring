@@ -6,8 +6,8 @@
 %Edmonton, AB, T6G 2E8, Canada
 %rosevear@ualberta.ca, hsbarker@ualberta.ca
 
-ITERATE_DISEASE = 1;
-ITERATE_UTILITY = 0;
+ITERATE_DISEASE = 0;
+ITERATE_UTILITY = 1;
 
 %These are the disease/utility profiles used when one is held constant and
 %the other is varied
@@ -15,11 +15,13 @@ FIXED_DISEASE = [0.85 0.75 0.65 0.95 0.80 0.75 0.10 0.15 0.20 0.04 0.15 0.10 0.0
 FIXED_UTILITY = [-25 -50 -75 -30 -55 -80 -35 -60 -85 -40 -65 -90];
 
 DISEASE_PROFILES = [0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33; 0.85 0.75 0.65 0.95 0.80 0.75 0.10 0.15 0.20 0.04 0.15 0.10 0.05 0.10 0.15 0.01 0.05 0.10; 0.40 0.10 0.05 0.80 0.70 0.20 0.50 0.40 0.15 0.15 0.20 0.50 0.10 0.60 0.80 0.05 0.10 0.30; 0.10 0.05 0.01 0.20 0.10 0.05 0.50 0.25 0.04 0.60 0.40 0.30 0.40 0.70 0.95 0.20 0.50 0.65];
-UTILITY_PROFILES = [-35 -60 -85; -45 -70 -95; -11 -12 -13; -30 -65 -90; -30 -65 -90; -35 -35 -35; -10 -10 -10];
+UTILITY_PROFILES = [-25 -50 -75 -30 -55 -80 -35 -60 -85 -40 -65 -90; -35 -60 -85 -30 -65 -90 -45 -70 -95 -50 -75 -100; -1 -2 -3 -6 -7 -8 -11 -12 -13 -16 -17 -18; -35 -60 -85 -45 -70 -95 -30 -65 -90 -50 -75 -100; -25 -25 -25 -30 -30 -30 -35 -35 -35 -40 -40 -40; -10 -10 -10 -10 -10 -10 -10 -10 -10 -10 -10 -10];
 
 if ITERATE_DISEASE == 1
+    RUN_TYPE = 'disease';
     NUM_ITERATIONS = size(DISEASE_PROFILES, 1);
 elseif ITERATE_UTILITY == 1
+    RUN_TYPE = 'utility';
     NUM_ITERATIONS = size(UTILITY_PROFILES, 1);
 else
     NUM_ITERATIONS = 1200;
@@ -171,8 +173,7 @@ mean_strategy_similarity = mean(strategy_similarities);
 strategy_similarity_standard_deviation = std(strategy_similarities);
 
 %Write them to a file for safekeeping
-stat_summary_file = fopen('single_issue_network_stats.txt', 'W');
-fprintf(stat_summary_file, 'Stat Summary File For Single Issue Network\n');
+stat_summary_file = fopen('single_issue_network_' + string(RUN_TYPE) + '_stats.txt', 'W');
 fprintf(stat_summary_file, 'Min: Max Expected Utility: ' + string(min_utility) + '\n');
 fprintf(stat_summary_file, 'Max: Max Expected Utility: ' + string(max_utility) + '\n');
 fprintf(stat_summary_file, 'Range: Max Expected Utility: ' + string(range) + '\n');

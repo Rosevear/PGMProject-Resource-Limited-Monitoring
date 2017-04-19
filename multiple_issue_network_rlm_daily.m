@@ -6,8 +6,8 @@
 %Edmonton, AB, T6G 2E8, Canada
 %rosevear@ualberta.ca, hsbarker@ualberta.ca
 
-ITERATE_DISEASE = 0;
-ITERATE_UTILITY = 1;
+ITERATE_DISEASE = 1;
+ITERATE_UTILITY = 0;
 
 %These are the disease/utility profiles used when one is held constant and
 %the other is varied
@@ -21,8 +21,10 @@ DISEASE_PROFILES = [0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 0.33 
 UTILITY_PROFILES = [-25 -50 -75 -30 -55 -80 -35 -60 -85 -1000 -1000 -1000; -35 -60 -85 -30 -65 -90 -45 -70 -95 -1000 -1000 -1000; -1 -2 -3 -6 -7 -8 -11 -12 -13 -1000 -1000 -1000; -35 -60 -85 -45 -70 -95 -30 -65 -90 -1000 -1000 -1000; -25 -25 -25 -30 -30 -30 -35 -35 -35 -1000 -1000 -1000; -10 -10 -10 -10 -10 -10 -10 -10 -10 -1000 -1000 -1000];
 
 if ITERATE_DISEASE == 1
+    RUN_TYPE = 'disease';
     NUM_ITERATIONS = size(DISEASE_PROFILES, 1);
 elseif ITERATE_UTILITY == 1
+    RUN_TYPE = 'utility';
     NUM_ITERATIONS = size(UTILITY_PROFILES, 1);
 else
     NUM_ITERATIONS = 1200;
@@ -246,8 +248,7 @@ mean_strategy_similarity = mean(strategy_similarities);
 strategy_similarity_standard_deviation = std(strategy_similarities);
 
 %Write them to a file for safekeeping
-stat_summary_file = fopen('multiple_issue_network_stats.txt', 'W');
-fprintf(stat_summary_file, 'Stat Summary File For Multiple Issue Network\n');
+stat_summary_file = fopen('multiple_issue_network_' + string(RUN_TYPE) + '_rlm_daily_stats.txt', 'W');
 fprintf(stat_summary_file, 'Min: Max Expected Utility: ' + string(min_utility) + '\n');
 fprintf(stat_summary_file, 'Max: Max Expected Utility: ' + string(max_utility) + '\n');
 fprintf(stat_summary_file, 'Range: Max Expected Utility: ' + string(range) + '\n');

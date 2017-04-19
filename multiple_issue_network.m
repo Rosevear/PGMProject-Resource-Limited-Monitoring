@@ -246,8 +246,7 @@ mean_strategy_similarity = mean(strategy_similarities);
 strategy_similarity_standard_deviation = std(strategy_similarities);
 
 %Write them to a file for safekeeping
-stat_summary_file = fopen('multiple_issue_network_stats.txt', 'W');
-fprintf(stat_summary_file, 'Stat Summary File For Multiple Issue Network\n');
+stat_summary_file = fopen('multiple_issue_network_' + string(RUN_TYPE) + '_stats.txt', 'W');
 fprintf(stat_summary_file, 'Min: Max Expected Utility: ' + string(min_utility) + '\n');
 fprintf(stat_summary_file, 'Max: Max Expected Utility: ' + string(max_utility) + '\n');
 fprintf(stat_summary_file, 'Range: Max Expected Utility: ' + string(range) + '\n');
