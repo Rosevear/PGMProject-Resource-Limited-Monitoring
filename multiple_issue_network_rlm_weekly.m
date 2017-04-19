@@ -7,8 +7,8 @@
 %rosevear@ualberta.ca, hsbarker@ualberta.ca
 
 
-ITERATE_DISEASE = 1;
-ITERATE_UTILITY = 0;
+ITERATE_DISEASE = 0;
+ITERATE_UTILITY = 1;
 
 %These are the disease/utility profiles used when one is held constant and
 %the other is varied
@@ -224,11 +224,19 @@ for iteration = 1:NUM_ITERATIONS
           limid.CPD{util_params(i + SECOND_ISSUE_UTILITY_OFFSET)} = tabular_utility_node(limid, utility(i + SECOND_ISSUE_UTILITY_OFFSET), UTILITY_PROFILES(iteration + 1, :));
       else
           limid.CPD{util_params(i + SECOND_ISSUE_UTILITY_OFFSET)} = tabular_utility_node(limid, utility(i + SECOND_ISSUE_UTILITY_OFFSET), FIXED_UTILITY2);
-      end
-    
-      %TODO: Add enofrcement utilities
-      limid.CPD{rlm_utility_params} = tabular_utility_node(limid, 51); 
+      end 
     end
+    
+    %Construct the utilites that bias the system away from choice that
+    %would break the resource constraint.
+    utils = zeros(1, 2^20);
+    assignments = fliplr(dec2bin(0:(2^20)-1)-'0');
+    for index = 1:size(assignments, 1)
+        if sum(assignments(i, :)) > 3
+            utils(index) = -1000;
+        end
+    end
+    limid.CPD{rlm_utility_params} = tabular_utility_node(limid, 51);
 
     inf_engine = jtree_limid_inf_engine(limid);
     max_iter = 1;
@@ -271,7 +279,7 @@ strategy_similarity_standard_deviation = std(strategy_similarities);
 
 
 %Write them to a file for safekeeping
-stat_summary_file = fopen('multiple_issue_network_' + RUN_TYPE + '_rlm_weekly_stats.txt', 'W');
+stat_summary_file = fopen('multiple_issue_network_' + string(RUN_TYPE) + '_rlm_weekly_stats.txt', 'W');
 fprintf(stat_summary_file, 'Min: Max Expected Utility: ' + string(min_utility) + '\n');
 fprintf(stat_summary_file, 'Max: Max Expected Utility: ' + string(max_utility) + '\n');
 fprintf(stat_summary_file, 'Range: Max Expected Utility: ' + string(range) + '\n');

@@ -6,8 +6,8 @@
 %Edmonton, AB, T6G 2E8, Canada
 %rosevear@ualberta.ca, hsbarker@ualberta.ca
 
-ITERATE_DISEASE = 1;
-ITERATE_UTILITY = 0;
+ITERATE_DISEASE = 0;
+ITERATE_UTILITY = 1;
 
 %These are the disease/utility profiles used when one is held constant and
 %the other is varied
@@ -26,6 +26,9 @@ elseif ITERATE_UTILITY == 1
 else
     NUM_ITERATIONS = 1200;
 end
+
+max_expected_utilities = zeros(NUM_ITERATIONS, 1);
+strategies = repmat(struct('strategy_matrix', []), 1, NUM_ITERATIONS);
 
 for iteration = 1:NUM_ITERATIONS
     seed = iteration;
@@ -141,8 +144,16 @@ for iteration = 1:NUM_ITERATIONS
       end
     end
     
-    %TODO: Add weekly rlm
-    limid.CPD{rlm_utility_params} = tabular_utility_node(limid, 26);
+    %Construct the utilites that bias the system away from choice that
+    %would break the resource constraint.
+    utils = zeros(1, 2^10);
+    assignments = fliplr(dec2bin(0:(2^10)-1)-'0');
+    for index = 1:size(assignments, 1)
+        if sum(assignments(i, :)) > 3
+            utils(index) = -1000;
+        end
+    end
+    limid.CPD{rlm_utility_params} = tabular_utility_node(limid, 26, utils);
 
     inf_engine = jtree_limid_inf_engine(limid);
     max_iter = 1;
